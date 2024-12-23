@@ -1,0 +1,10 @@
+ipykernel
+ipywidgets==7
+tqdm
+openpyxl
+pandas==2.1.1
+matplotlib
+seaborn==0.13.1
+networkx==3.3
+powerlaw==1.4.6
+cpnet==0.0.21
