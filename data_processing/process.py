@@ -1,19 +1,26 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from collections import Counter
-import pandas as pd
-import ast
 
 ########## Network creation (Network based on similarities between artists)
-def fix_years(years, override_active_years = True, return_all_nan=False): #Birth, first active year, last active year, death
+def years_validity(years):
     if np.isnan(years[0]) and np.isnan(years[1]):
-        if return_all_nan:
-            return [np.nan, np.nan, np.nan, np.nan]
-        return np.nan
+        return False
     if np.isnan(years[2]) and np.isnan(years[3]):
-        if return_all_nan:
-            return [np.nan, np.nan, np.nan, np.nan]
-        return np.nan
+        return False
+    if not np.isnan(years[0]) and not np.isnan(years[3]):
+        if years[0]>years[3]:
+            return False
+        if years[0] + 130 < years[3]:
+            return False
+    return True
+    
+
+def fix_years(years, override_active_years = True, check_years = True, return_all_nan=False): #Birth, first active year, last active year, death
+    if check_years:
+        if years_validity(years):
+            if return_all_nan:
+                return [np.nan, np.nan, np.nan, np.nan]
+            else:
+                return np.nan
     
     if np.isnan(years[0]):
         years[0] = years[1]-20
@@ -27,18 +34,25 @@ def fix_years(years, override_active_years = True, return_all_nan=False): #Birth
     if override_active_years:
         if years[2]>years[3]:
             years[2] = years[3]
-        if years[1]>years[0]:
+        if years[1]<years[0]:
             years[1] = years[0]
 
     #Sort just in case
     return sorted(years)
 
 
-def get_loc_similarity(places1, places2, years1, years2, birthplace1, birthplace2, nationality1, nationality2, citizenship1, citizenship2, active_years_only = False):
+def get_loc_similarity(places1=None, places2=None, years1=None, years2=None,
+                       birthplace1=None, birthplace2=None, nationality1=None,
+                       nationality2=None, citizenship1=None, citizenship2=None,
+                       active_years_only = False, full_data_1 = None, full_data_2 = None):
     """
-    Calculate similarity index between two artists based on their places and years."""
+    Calculate similarity index between two artists based on their places and years.
+    """
     p = 0
- 
+    if full_data_1 is not None:
+        pass
+    if full_data_2 is not None:
+        pass
     if (type(places1) != float and type(places2) != float):
         #Assuming not np.nan, but list
         for place1 in places1:
@@ -89,49 +103,3 @@ def get_loc_similarity(places1, places2, years1, years2, birthplace1, birthplace
         average_common_years_per_place2 = common_years/(len(places2)) if len(places2) > 0 else 0
     
     return (average_common_years_per_place1 + average_common_years_per_place2)/2 * p
-
-########## Network analysis functions
-
-def get_column_counts(artists_df, column):
-    return (artists_df[column]).value_counts()
-
-def get_column_counts_adjusted(artists_df, column):
-    return (artists_df[column]).value_counts(normalize=True)
-
-def get_column_average(artists_df, column):
-    return (artists_df[column]).mean()
-
-def get_column_std(artists_df, column):
-    return (artists_df[column]).std()
-
-def get_locations_average(artists_df):
-    all_people_locations = []
-    for index, row in artists_df.iterrows():
-        locations = ast.literal_eval(row['locations'])
-        all_people_locations.extend(locations)
-
-    return pd.Series(all_people_locations).value_counts(normalize=True)
-
-def get_female_percentage(artists_df):
-    values = (artists_df['gender'].value_counts(normalize=True))
-    try:
-        values_known = values['male'] + values['female']
-    except KeyError:
-        try:
-            values_known = values['male']
-            if values_known == 0:
-                return None
-            else :
-                return 0
-        except KeyError:
-            try:
-                values_known = values['female']
-                if values_known == 0:
-                    return None
-                else:
-                    return 100
-            except KeyError:
-                return None
-    return 100*values['female'] / values_known
-
- 
