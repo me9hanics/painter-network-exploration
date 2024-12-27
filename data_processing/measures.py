@@ -64,7 +64,9 @@ def describe_measures(artists_df, print_results=True):
 def get_column_counts(artists_df, column):
     return (artists_df[column]).value_counts()
 
-def get_column_counts_adjusted(artists_df, column):
+def get_column_counts_adjusted(artists_df, column, round_to=3):
+    if round_to:
+        return (artists_df[column]).value_counts(normalize=True).round(round_to)
     return (artists_df[column]).value_counts(normalize=True)
 
 def get_column_average(artists_df, column):
