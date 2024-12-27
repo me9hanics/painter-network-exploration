@@ -2,7 +2,6 @@ import numpy as np
 import networkx as nx
 import pandas as pd
 import ast
-import measures
 
 def describe_graph(G, weights=True, shortest_paths = True):    
     print("Number of nodes: ", G.number_of_nodes())
@@ -26,13 +25,13 @@ def describe_graph(G, weights=True, shortest_paths = True):
         print("Diameter: ", nx.diameter(G))
 
 def describe_measures(artists_df, print_results=True):
-    nationality = measures.get_column_counts_adjusted(artists_df, 'Nationality')
-    citizenship = measures.get_column_counts_adjusted(artists_df, 'citizenship')
-    gender = measures.get_female_percentage(artists_df)
-    birth_year = measures.get_column_average(artists_df, 'birth_year')
-    wikiart_pictures_count = measures.get_column_average(artists_df, 'wikiart_pictures_count')
-    styles = measures.get_column_counts_adjusted(artists_df, 'styles')
-    movement = measures.get_column_counts_adjusted(artists_df, 'movement')
+    nationality = get_column_counts_adjusted(artists_df, 'Nationality')
+    citizenship = get_column_counts_adjusted(artists_df, 'citizenship')
+    gender = get_female_percentage(artists_df)
+    birth_year = get_column_average(artists_df, 'birth_year')
+    wikiart_pictures_count = get_column_average(artists_df, 'wikiart_pictures_count')
+    styles = get_column_counts_adjusted(artists_df, 'styles')
+    movement = get_column_counts_adjusted(artists_df, 'movement')
 
     def get_top_10_items(data):
         return [(k, round(v, 3)) for k, v in list(data.items())[:10]]
