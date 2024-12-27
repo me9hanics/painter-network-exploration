@@ -47,7 +47,7 @@ def plot_deg_distr_linandlog(degrees, ax=None):
         first_ax = ax[0,0]
         second_ax = ax[0,1]
     else:
-        print("Too many dimensions") #Added this for the future
+        raise ValueError("Too many axes")
         return
 
     #Degree distribution
@@ -232,9 +232,31 @@ def plot_threshold_sizes_regions(
     plt.tight_layout()
     plt.show()
 
-def plot_hist_distribution(clustering_coefficients, ax):
+def plot_CC_distribution_hist(clustering_coefficients, ax):
     ax.hist(clustering_coefficients, bins=np.linspace(0, 1, 21), density=True, alpha=0.75)
     ax.set_xlabel("Clustering coefficient")
     ax.set_ylabel("Fraction of nodes")
     ax.set_title("Clustering coefficient distribution")
     ax.set_xlim(0, 1)
+
+def plot_values_per_k(k_nn_values_per_k, ax=None, xscale="log", yscale="log",
+                      title="Average neighbor's neighbour degree per node degree",
+                      ylabel="Average neighbor's neighbour degree"):
+    """Intended to use with a dictionary, for these purposes:
+       - either {k: average_knn_for_k(k_nn_dict, k)}
+       - or nx.rich_club_coefficient(G)
+       """
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(10, 6))
+    else:
+        fig = None
+
+    ax.plot(list(k_nn_values_per_k.keys()), list(k_nn_values_per_k.values()), 'o')
+    ax.set_xlabel("Node degree")
+    ax.set_ylabel(ylabel)
+    ax.set_xscale(xscale)
+    ax.set_yscale(yscale)
+    ax.set_title(title)
+    
+    if fig is not None:
+        plt.show()

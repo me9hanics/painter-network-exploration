@@ -2,6 +2,7 @@ import numpy as np
 import networkx as nx
 import pandas as pd
 import ast
+import measures
 
 def describe_graph(G, weights=True, shortest_paths = True):    
     print("Number of nodes: ", G.number_of_nodes())
@@ -24,6 +25,42 @@ def describe_graph(G, weights=True, shortest_paths = True):
         print(f"Average shortest path length: {sum(lcc_all_shortest_path_lengths)/len(lcc_all_shortest_path_lengths):.2f}")
         print("Diameter: ", nx.diameter(G))
 
+def describe_measures(artists_df, print_results=True):
+    nationality = measures.get_column_counts_adjusted(artists_df, 'Nationality')
+    citizenship = measures.get_column_counts_adjusted(artists_df, 'citizenship')
+    gender = measures.get_female_percentage(artists_df)
+    birth_year = measures.get_column_average(artists_df, 'birth_year')
+    wikiart_pictures_count = measures.get_column_average(artists_df, 'wikiart_pictures_count')
+    styles = measures.get_column_counts_adjusted(artists_df, 'styles')
+    movement = measures.get_column_counts_adjusted(artists_df, 'movement')
+
+    def get_top_10_items(data):
+        return [(k, round(v, 3)) for k, v in list(data.items())[:10]]
+
+    top10s_df = pd.DataFrame({
+        'Nationality': [item[0] for item in get_top_10_items(nationality)],
+        'Nationality ratio': [item[1] for item in get_top_10_items(nationality)],
+        'Citizenship': [item[0] for item in get_top_10_items(citizenship)],
+        'Citizenship ratio': [item[1] for item in get_top_10_items(citizenship)],
+        'Movement': [item[0] for item in get_top_10_items(movement)],
+        'Movement ratio': [item[1] for item in get_top_10_items(movement)],
+        'Styles': [item[0] for item in get_top_10_items(styles)],
+        'Styles ratio': [item[1] for item in get_top_10_items(styles)],
+    })
+    top10s_df.index = np.arange(1, 11)
+
+    summary_stats = {
+        "fem_pct": round(gender, 3),
+        "avg_birth_year": round(birth_year, 3),
+        "avg_wikiart_pics_count": round(wikiart_pictures_count, 3)
+    }
+
+    if print_results:
+        print("Percentage of females in the graph: ", summary_stats["fem_pct"])
+        print("Average birth year in the graph: ", summary_stats["avg_birth_year"])
+        print("Average number of pictures on WikiArt: ", summary_stats["avg_wikiart_pics_count"])
+        return top10s_df
+    return top10s_df, summary_stats
 
 def get_column_counts(artists_df, column):
     return (artists_df[column]).value_counts()
@@ -90,3 +127,22 @@ def compute_disparity_filter_probas(G):
             edge_probas[(u, v)] = p_ij
 
     return edge_probas
+
+def neighbours_avg_degree(G, node):
+    return np.mean([G.degree(neighbour) for neighbour in G.neighbors(node)])
+
+def average_knn_for_k(k_nn_dict, k):
+    return np.mean([data["k_nn"] for data in k_nn_dict.values() if data["degree"] == k])
+
+def average_knn(k_nn_dict):
+    k_values = np.unique([data["degree"] for data in k_nn_dict.values()])
+    k_nn_values_per_k = {k : average_knn_for_k(k_nn_dict, k) for k in k_values}
+    return k_nn_values_per_k
+
+def rich_club_approximate(G):
+    """Only relevant for high degree nodes, as k -> inf !!!"""
+    rich_club = nx.rich_club_coefficient(G, normalized=False) # don't normalize, it is slow and can throw errors
+    average_degree = np.mean([G.degree(node) for node in G.nodes()])
+    factor = 1 / (G.number_of_nodes() * average_degree)
+    rich_club_normalized = {k: v / (factor * k**2) for k, v in rich_club.items() if k > 0}
+    return rich_club_normalized
