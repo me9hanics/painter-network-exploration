@@ -230,7 +230,7 @@ def plot_threshold_sizes_regions(
     ax[1].legend()
 
     plt.tight_layout()
-    plt.show()
+    #plt.show()
 
 def plot_CC_distribution_hist(clustering_coefficients, ax):
     ax.hist(clustering_coefficients, bins=np.linspace(0, 1, 21), density=True, alpha=0.75)
