@@ -13,6 +13,8 @@
 - Mesoscopic analysis: community-attribute statistics
 - Visualizations
 
+To my understanding, this is the *largest "painter network from historical geographical data"* constructed and analyzed. Connection of artists / painters is typically done via coexhibitions, such as in the [paper](https://www.science.org/doi/10.1126/science.aau7224) of Barabási and Fraiberger et al. (2018), or in my joint work [here](https://github.com/me9hanics/e-flux_scraping_coexhibition_networks) using e-flux coexhibition data. This project rather tries to reconstruct the historical connections based on temporal and locations information of painters, which is extracted into my dataset (PainterPalette) from Wikidata.
+
  The PainterPalette dataset provides information on ~10000 painters from antiquity to today's age, with various biographical, geographical and stylistic data. From this, a network of painters is constructed, cleaned, and analyzed. Statistical measures of painter attributes are also computed. Then, communities in the network are detected using a (nested) stochastic block model (SBM), and attributes across the communities are compared (such as differences in female representation).
 
 ![Painter communities](images/painter_communities_nested_blockmodel.png)
@@ -20,9 +22,19 @@
 The results show, that due to the historical / longitudinal nature of the network, certain measures give different results as in comparison to typical social networks - such as power-law distribution $\alpha$ values, which are typically between 2 and 3 but much higher for our network. The network resembles a long chain of social network snapshots in time, limiting the power-law effect, however snapshots of the network omit to these phenomenons as expected.<br>The network is assortative, and the rich-club effect is more prominent the more higher the degree. Statistics of attributes show insights such as the increase of female representation over time, and Russian artists have the most paintings on WikiArt in the dataset.<br>
 From the communities of the painters, we can see great differences in attributes across the communities such as female representation, observing that there is one standout community with very high average of WikiArt paintings (consisting of French and American late impressionists and realists).
 
+<br>Scholars can take inspiration from this project:
+
+ - use the resulting network, or the dataset and methods to analyze a network of painters
+ - grasp methodology to construct a similar network, and especially to filter the network 
+ - generally understand various network science methods and motivations
+ - see how a nested SBM can be used to detect communities in a network, and their higher-level hierarchy
+ - improve Python data visualization skills
+ - possibly: realize the limitations of network science methods (e.g. centrality measures) on historical, "longitudinal" networks
+
+
 ## Network construction
 
-Painter data is taken from [PainterPalette](https://github.com/me9hanics/PainterPalette), the instances make up our nodes:
+Painter data is taken from [PainterPalette](https://github.com/me9hanics/PainterPalette), and is available in the `data` folder as `artists.csv`. The instances make up our nodes:
 
 | artist | Nationality | citizenship | gender | styles | movement (Wiki) | Movements (Art500k) | birth place | death place | birth year | death_year | FirstYear | LastYear | wikiart_pictures_count | locations | locations_with_years | styles_extended | StylesCount | StylesYears | occupations | PaintingsExhibitedAt | PaintingsExhibitedAtCount | PaintingSchool | Influencedby | Influencedon | Pupils | Teachers | FriendsandCoworkers | Contemporary | ArtMovement | Type |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -32,22 +44,25 @@ Painter data is taken from [PainterPalette](https://github.com/me9hanics/Painter
 | Jose Ferraz de Almeida Junior | Brazilian | Brazil | male | Academicism, Realism | Realism | {Realism:64} | Itu | Piracicaba | 1850 | 1899 | 1850 | 1899 | 65 | [] | [] | {Academicism:13},{Realism:52} | {Realism:51}, {Academicism:15} | Realism:1850-1899,Academicism:1850-1895 | painter | Brazil, Rio de Janeiro, Sao Paulo | {Sao Paulo:30},{Brazil:36},{Rio de Janeiro:4} | NaN | NaN | NaN | NaN | NaN | NaN | No | NaN | NaN |
 | ... | ... | ... | ... | ... | ... | ... | ... | ... | ... | ... | ... | ... | ... | ... | ... | ... | ... | ... | ... | ... | ... | ... | ... | ... | ... | ... | ... | ... | ... |
 
-The "location" attribute is used to connect the painters. The logic is that if two painters lived in the same location at the same time, they are connected. We can gather temporal data from the birth and death years of the painter. Since it is generally not available when a painter moved to a location, we assume for simplicity that the painter lived in for each location for the same amount of time, averaging over the lifespan. This gives rise to the following measure for how connected two painters based on time and location:
+There is connection (edge) data, this has to be manually implemented: the "location" attribute is used to connect the painters. The logic is that if two painters lived in the same location at the same time, they are connected.<br>
+We gather temporal data from the birth and death years of the painter; however, since it is generally not available when a painter moved to a location, we assume for simplicity that the painter lived in for each location for the same amount of time, averaging over the lifespan. This inspired the following measure for how connected are two painters based on time and location:
 
 
 $$ TLSI = \frac{{\text{{common years (in their lifetime)}}}}{{\text{{amount of places}}}} \times \text{{amount of common places}} $$
 
 
-The dimension of this index is supposed to be time. The longer people live (at the same place), the more likely they are to meet, which makes sense. On the other hand, living at more places does not necessary mean two painters are more likely to meet - if they live 5 and 5 years at two different places, the probability that they meet shall be equal/similar to the probability in the case they lived 10 years at the one place. Locations are included in the formula in a normalized way to still boost the value if two painters lived at the same places.
+(The dimension of this index is supposed to be time. The longer people live (at the same place), the more likely they are to meet, which makes sense. On the other hand, living at more places does not necessary mean two painters are more likely to meet - if they live 5 and 5 years at two different places, the probability that they meet shall be equal/similar to the probability in the case they lived 10 years at the one place. Locations are included in the formula in a normalized way to still boost the value if two painters lived at the same places.)
 
-The initial network is constructed (using `numpy` computations)
+The initial network is constructed in NetworkX - it is a generally slow library and nested iterations can take long, therefore I improved performance by using `numpy` computations prior iterations wherever possible.<br>
+Nodes with sufficient location and temporal data are added while constructing the network, then edges are added based on the above formula (computing only for pairs of nodes that potentially have an edge based on their lifetime) - if the index is above 0, an edge is added, with the index as weight. We will later filter the network based the edge weight.
 
-(Some amount of incorrections are cleaned for consistency.)
+The filtered network is stored in the `data\painters.graphml` file (see the filtering for backbone extraction below).<br>
+Incorrections are cleaned for consistency.
 
 ## Network backbone extraction
 
-To get rid of unrealistic edges, we need to filter the network.<br>
-I test and compare the results of two methods: thresholding weights, and disparity filter.
+To get rid of unrealistic edges, we need to filter the network. I test and compare the results of two methods: thresholding weights, and disparity filter.<br>
+For analysis afterwards, I select the filtered network gathered from the disparity filter method with $\alpha = 0.1$. This is stored in the `data\painters.graphml` file.
 
 ### Thresholding
 
@@ -172,4 +187,4 @@ Some of the findings:
 - Among nationalities, Russian artists have the highest average picture count on WikiArt. Among communities, a group of French and American late impressionists, French academic art painters, and realists, have the highest average WikiArt picture count.
 - Females are most common in a 20th-century community consisting of American and Japanese artists, and the dataset has a high representation of female artists among US artists.
 
-The methods we used helped to gain insights about the network of painters.
+The methods we used helped to gain insights about the network of painters, and can be inspiring for further research in art history, or for different network science projects.
