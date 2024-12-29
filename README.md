@@ -17,7 +17,9 @@ To my understanding, this is the *largest "painter network from historical geogr
 
  The PainterPalette dataset provides information on ~10000 painters from antiquity to today's age, with various biographical, geographical and stylistic data. From this, a network of painters is constructed, cleaned, and analyzed. Statistical measures of painter attributes are also computed. Then, communities in the network are detected using a (nested) stochastic block model (SBM), and attributes across the communities are compared (such as differences in female representation).
 
-![Painter communities](images/painter_communities_nested_blockmodel.png)
+<div align="center" style="text-align: center;">
+  <img src="images/painter_communities_nested_blockmodel.png" alt="Painter communities" width="600"/>
+</div>
 
 The results show, that due to the historical / longitudinal nature of the network, certain measures give different results as in comparison to typical social networks - such as power-law distribution $\alpha$ values, which are typically between 2 and 3 but much higher for our network. The network resembles a long chain of social network snapshots in time, limiting the power-law effect, however snapshots of the network omit to these phenomenons as expected.<br>The network is assortative, and the rich-club effect is more prominent the more higher the degree. Statistics of attributes show insights such as the increase of female representation over time, and Russian artists have the most paintings on WikiArt in the dataset.<br>
 From the communities of the painters, we can see great differences in attributes across the communities such as female representation, observing that there is one standout community with very high average of WikiArt paintings (consisting of French and American late impressionists and realists).
@@ -31,6 +33,23 @@ From the communities of the painters, we can see great differences in attributes
  - improve Python data visualization skills
  - possibly: realize the limitations of network science methods (e.g. centrality measures) on historical, "longitudinal" networks
 
+## How to reproduce?
+
+The data collection, network construction and analysis are all done in one notebook: `painter_network.ipynb`, just need to run that.<br>
+To use the correct environment, you can create a new conda environment with the `environment.yml` file:
+
+```bash
+conda env create -f environment.yml
+```
+
+or use the `requirements.txt` file with pip:
+
+```bash
+pip install -r requirements.txt
+```
+
+There is one caveat: the community detection is done with the `graph-tool` library (as it has SBM implemented), which is not available on Windows due to using PyStan in the methods running Monte-Carlo Markov-chain algorithms. Thus, I did not include in the requirements.<br>
+The community detection is done separately in the `sbm.ipynb` notebook and results (communities) are loaded into the main notebook. If you would like to run it on Windows, I recommend running a Docker containter - here is my implementation of running `graph-tool` in a VSCode Docker container with extensions: [GitHub repository to run graph-tool in Docker with VSCode](https://github.com/me9hanics/Docker-with-Copilot-JupyterNotebook-VSCode-Graph-tool).
 
 ## Network construction
 
@@ -161,7 +180,9 @@ The power-law fit is much more realistic here: $\alpha=3.6$.
 The used method is the nested stochastic block model (nested SBM), which is a hierarchical version of SBMs, finding connections on higher levels, between communities (this can be nicely visualized on the plot).<br>
 As the implementation is only available in the `graph-tool` library, which is not available in this environment and on Windows in general, I run the community detection in the separate `sbm.ipynb` notebook.
 
-![Painter communities](images/painter_communities_nested_blockmodel.png)
+<div align="center" style="text-align: center;">
+  <img src="images/painter_communities_nested_blockmodel.png" alt="Painter communities" width="400"/>
+</div>
 
 ### Community statistics
 
