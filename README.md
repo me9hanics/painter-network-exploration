@@ -15,7 +15,7 @@
 
 To my understanding, this is the *largest "painter network from historical geographical data"* constructed and analyzed. Connection of artists / painters is typically done via coexhibitions, such as in the [paper](https://www.science.org/doi/10.1126/science.aau7224) of Barabási and Fraiberger et al. (2018), or in my joint work [here](https://github.com/me9hanics/e-flux_scraping_coexhibition_networks) using e-flux coexhibition data. This project rather tries to reconstruct the historical connections based on temporal and locations information of painters, which is extracted into my dataset (PainterPalette) from Wikidata.
 
- The PainterPalette dataset provides information on ~10000 painters from antiquity to today's age, with various biographical, geographical and stylistic data. From this, a network of painters is constructed, cleaned, and analyzed. Statistical measures of painter attributes are also computed. Then, communities in the network are detected using a (nested) stochastic block model (SBM), and attributes across the communities are compared (such as differences in female representation).
+The PainterPalette dataset provides information on ~10000 painters from antiquity to today's age, with various biographical, geographical and stylistic data. From this, a network of painters is constructed, cleaned, and analyzed. Statistical measures of painter attributes are also computed. Then, communities in the network are detected using a (nested) stochastic block model (SBM), and attributes across the communities are compared (such as differences in female representation).
 
 <div align="center" style="text-align: center;">
   <img src="images/painter_communities_nested_blockmodel.png" alt="Painter communities" width="600"/>
@@ -33,7 +33,9 @@ From the communities of the painters, we can see great differences in attributes
  - improve Python data visualization skills
  - possibly: realize the limitations of network science methods (e.g. centrality measures) on historical, "longitudinal" networks
 
-## How to reproduce?
+Similar, less extensive works can be found in the repo and subrepos of [ArtProject](https://github.com/me9hanics/ArtProject?tab=readme-ov-file#artproject).
+
+## How to reproduce the results?
 
 The data collection, network construction and analysis are all done in one notebook: `painter_network.ipynb`, just need to run that.<br>
 To use the correct environment, you can create a new conda environment with the `environment.yml` file:
