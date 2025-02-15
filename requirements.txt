@@ -7,4 +7,4 @@ matplotlib
 seaborn==0.13.1
 networkx==3.3
 powerlaw==1.4.6
-cpnet==0.0.21
+numpy
