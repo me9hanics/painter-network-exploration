@@ -2,7 +2,7 @@ name: netsci-course
 channels:
   - defaults
 dependencies:
- - python=3.11.5
+ - python
  - ipykernel
  - ipywidgets=7
  - tqdm
@@ -12,6 +12,3 @@ dependencies:
  - conda-forge::seaborn=0.13.1
  - networkx=3.3
  - powerlaw=1.4.6
- - pip
- - pip:
-   - cpnet==0.0.21
