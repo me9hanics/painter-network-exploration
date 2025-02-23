@@ -53,6 +53,16 @@ pip install -r requirements.txt
 There is one caveat: the community detection is done with the `graph-tool` library (as it has SBM implemented), which is not available on Windows due to using PyStan in the methods running Monte-Carlo Markov-chain algorithms. Thus, I did not include in the requirements.<br>
 The community detection is done separately in the `sbm.ipynb` notebook and results (communities) are loaded into the main notebook. If you would like to run it on Windows, I recommend running a Docker containter - here is my implementation of running `graph-tool` in a VSCode Docker container with extensions: [GitHub repository to run graph-tool in Docker with VSCode](https://github.com/me9hanics/Docker-with-Copilot-JupyterNotebook-VSCode-Graph-tool).
 
+The third notebook, the `infomap_louvain_jaccard.ipynb`, is a comparison of community detection methods outside analysis, it uses the infomap package, which is otherwise not used in the project. It can be installed with `pip`, but easiest done with modifying the environment file by adding these lines:
+
+```yaml
+ - pip
+ - pip:
+   - infomap
+```
+
+(Currently, Infomap only runs on Python 3.10 at latest.)
+
 ## Network construction
 
 Painter data is taken from [PainterPalette](https://github.com/me9hanics/PainterPalette), and is available in the `data` folder as `artists.csv`. The instances make up our nodes:
