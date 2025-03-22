@@ -105,6 +105,17 @@ def get_female_percentage(artists_df):
                 return None
     return 100*values['female'] / values_known
 
+### Graph measures
+
+def random_config_communities(comm, seed=1):
+    #nested list of communities: e.g. [[1,2,3], [4,5,6]]
+    #returns a list of communities with exact same distribution, but nodes randomly shuffled across communities
+    comm_lengths = [len(c) for c in comm]
+    flattened = [node for c in comm for node in c]
+    np.random.seed(seed)
+    np.random.shuffle(flattened)
+    section_indices = list(np.cumsum(comm_lengths))
+    return [flattened[i:j] for i, j in zip([0] + section_indices, section_indices)]
 
 def clustering_coefficient(G):
     """Calculated for each node, returns a list of coefficients"""
@@ -147,3 +158,120 @@ def rich_club_approximate(G):
     factor = 1 / (G.number_of_nodes() * average_degree)
     rich_club_normalized = {k: v / (factor * k**2) for k, v in rich_club.items() if k > 0}
     return rich_club_normalized
+
+def coreness(G, partition):
+    edges = list(G.edges())
+    cores = partition[0]
+    #peripheries = partition[1]
+    ro = 0
+    for i,j in edges:
+        if (i in cores) and (j in cores):
+            ro += 1
+    return ro
+
+def coreness_corrected(G, partition):
+    partition_randomized = random_config_communities(partition)
+    ro = coreness(G, partition)
+    ro_config = coreness(G, partition_randomized)
+    return ro/ro_config
+
+def extract_rich_core(G, weight='weight', weight_default = 1):
+    """Returns the core/periphery structure of a weighted undirected network (see [1]).
+       Code taken from Iacopo Iacopini [2], but updated the method (replacing outdated functions).
+        
+        Args
+        ----
+        G: NetworkX weighted undirected graph.
+        
+        weight: string (default='weight')
+        Key for edge data used as the edge weight w_ij.
+        
+        Returns
+        -------
+        sigmas: list
+        List of σ_i values associated to each node i of the network, representing the strength of the node i
+        after rescaling the weights in units of the minimal weight. σ_i = ∑j⌈w_ij/w_min⌉
+        
+        ranked_nodes: list
+        List of nodes ranked by normalised strength σ_i.
+        
+        r_star: int
+        r_star (r∗) is the index of the core boundary node, such that σ^{+}_r∗>σ^{+}_r for r > r*, where
+        σ^{+}_i is the portion of σ_i that connects node i, ranked r, to nodes of a higher rank.
+        
+        
+        References
+        ----------
+        .. [1] Ma A and Mondragón RJ (2015).
+        "Rich-cores in networks".
+        PLoS One 10(3):e0119678.
+        
+        .. [2] https://github.com/iaciac/py-network-rich-core/
+
+        """
+    
+    if G.is_multigraph():
+        raise nx.NetworkXNotImplemented("Function only implemented for simple graphs.")
+    
+    #TODO If no weight, use degree, and in-degree for
+
+    G = G.copy()
+    
+    #Use weight = weight_default for nodes without a weight
+    weights = [d.get(weight, weight_default) for _, _, d in G.edges(data=True)]
+    minw = min(weights)
+
+    for u, v, data in G.edges(data=True):
+        data[weight] = data.get(weight, 1) / minw
+    
+    strength = dict(G.degree(weight="weight"))
+    ranked_nodes = sorted(strength, key=strength.get, reverse=True)
+    
+    sigmas = []
+    for i in ranked_nodes:
+        sigma_i = sum(strength[j] for j in G.neighbors(i) if strength[j] > strength[i])
+        sigmas.append(sigma_i)
+    
+    #Find r_star, the core boundary index
+    r_star = sigmas.index(max(sigmas))
+    
+    return sigmas, ranked_nodes, r_star
+
+### Partition comparisons
+
+def community_LUT(comm_nested_list):
+    lut = {}
+    for i, comm in enumerate(comm_nested_list):
+        for node in comm:
+            lut[node] = i
+    return lut
+
+def index_matrix_values(comm1, comm2):
+    #Assuming comm1 and comm2 include the same nodes
+    a00 = 0; a11 = 0; a01 = 0; a10 = 0 #PEP8 would not approve
+    comm1_lut = community_LUT(comm1)
+    comm2_lut = community_LUT(comm2)
+    if set(comm1_lut.keys()) != set(comm2_lut.keys()):
+        raise ValueError("Communities must have the same nodes")
+    nodes = list(comm1_lut.keys())
+    pairs = [(nodes[i], nodes[j]) for i in range(len(nodes)) for j in range(i+1, len(nodes))]
+    for i, j in pairs:
+        if comm1_lut[i] == comm1_lut[j]:
+            if comm2_lut[i] == comm2_lut[j]:
+                a11 += 1
+            else:
+                a10 += 1
+        else:
+            if comm2_lut[i] == comm2_lut[j]:
+                a01 += 1
+            else:
+                a00 += 1
+    return a00, a01, a10, a11
+
+def rand_index(comm1, comm2):
+    a00, a01, a10, a11 = index_matrix_values(comm1, comm2)
+    return (a00 + a11) / (a00 + a01 + a10 + a11)
+
+def jaccard_index(comm1, comm2):
+    a00, a01, a10, a11 = index_matrix_values(comm1, comm2)
+    return a11 / (a01 + a10 + a11)
