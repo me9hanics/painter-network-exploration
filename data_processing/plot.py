@@ -252,7 +252,7 @@ def plot_values_per_k(k_nn_values_per_k, ax=None, xscale="log", yscale="log",
         fig = None
 
     ax.plot(list(k_nn_values_per_k.keys()), list(k_nn_values_per_k.values()), 'o')
-    ax.set_xlabel("Node degree")
+    ax.set_xlabel("Node degree ($k$)")
     ax.set_ylabel(ylabel)
     ax.set_xscale(xscale)
     ax.set_yscale(yscale)
