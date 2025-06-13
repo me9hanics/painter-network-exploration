@@ -98,6 +98,8 @@ def plot_deg_dist_fit_log_single(degrees, ax=None, label_ignore=False):
         ax.set_ylabel('$P(k)$')
         ax.set_title("Degree distribution")
     fit_f.power_law.plot_pdf(ax=ax, color='b', linestyle='-', linewidth=1, label='fit')
+    plt.text(0.05, 0.95, rf'$\alpha={fit_f.power_law.alpha:.2f}, xmin={fit_f.power_law.xmin:.2f}$')
+    #print(fit_f.power_law.alpha, fit_f.power_law.xmin)
 
 def plot_deg_dist_fit_log(degrees_list, label_ignore_list=None):
     if label_ignore_list is None:
